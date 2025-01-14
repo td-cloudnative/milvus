@@ -18,6 +18,13 @@ jobs:
           git config user.email "cloudnative@tongdun.net"
       - name: Add upstream repository
         run: |
-          
+          git remote add upstream https://github.com/milvus-io/milvus
+          git fetch upstream
+          git checkout main
+          git merge upstream/main
       - name: Push changes to fork repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: git push origin main
+      
  
