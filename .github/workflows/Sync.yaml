@@ -1,5 +1,23 @@
 name: Sync Fork
 on:
   schedule:
-    - cron: "0 0 * * *"
-  workflow_dispatch: 
+    - cron: "0 0 * * *" # 每天凌晨配置一次
+  workflow_dispatch: #支持手动触发
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Fork repository
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Set up Git
+        run: |
+          git config user.name "td-cloudnative"
+          git config user.email "cloudnative@tongdun.net"
+      - name: Add upstream repository
+        run: |
+          
+      - name: Push changes to fork repository
+ 
