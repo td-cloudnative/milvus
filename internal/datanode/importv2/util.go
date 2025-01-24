@@ -69,17 +69,6 @@ func NewSyncTask(ctx context.Context,
 		}, metacache.NewBM25StatsFactory)
 	}
 
-	var serializer syncmgr.Serializer
-	var err error
-	serializer, err = syncmgr.NewStorageSerializer(
-		allocator,
-		metaCache,
-		nil,
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	segmentLevel := datapb.SegmentLevel_L1
 	if insertData == nil && deleteData != nil {
 		segmentLevel = datapb.SegmentLevel_L0
@@ -100,12 +89,13 @@ func NewSyncTask(ctx context.Context,
 		syncPack.WithBM25Stats(bm25Stats)
 	}
 
-	return serializer.EncodeBuffer(ctx, syncPack)
+	task := syncmgr.NewSyncTask().WithAllocator(allocator).WithMetaCache(metaCache).WithSyncPack(syncPack)
+	return task, nil
 }
 
 func NewImportSegmentInfo(syncTask syncmgr.Task, metaCaches map[string]metacache.MetaCache) (*datapb.ImportSegmentInfo, error) {
 	segmentID := syncTask.SegmentID()
-	insertBinlogs, statsBinlog, deltaLog := syncTask.(*syncmgr.SyncTask).Binlogs()
+	insertBinlogs, statsBinlog, deltaLog, bm25Log := syncTask.(*syncmgr.SyncTask).Binlogs()
 	metaCache := metaCaches[syncTask.ChannelName()]
 	segment, ok := metaCache.GetSegmentByID(segmentID)
 	if !ok {
@@ -120,6 +110,7 @@ func NewImportSegmentInfo(syncTask syncmgr.Task, metaCaches map[string]metacache
 		ImportedRows: segment.FlushedRows(),
 		Binlogs:      lo.Values(insertBinlogs),
 		Statslogs:    lo.Values(statsBinlog),
+		Bm25Logs:     lo.Values(bm25Log),
 		Deltalogs:    deltaLogs,
 	}, nil
 }
